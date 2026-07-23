@@ -1,0 +1,19 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Wedding Invitation//RU
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+SUMMARY:Свадьба ❤
+DTSTART;TZID=Asia/Barnaul:20260926T153000
+DTEND;TZID=Asia/Barnaul:20260926T220000
+DTSTAMP:20260926T083000Z
+UID:wedding-2026-09-26@invitation
+DESCRIPTION:Программа дня:\n15:30 — Сбор гостей\n1
+ 6:00 — Торжественная регистрация брака\n17:
+ 00 — Начало банкета\n22:00 — Официальное за
+ вершение праздничного дня
+LOCATION:Центральное кафе\, рп. Тальменка\, Ба
+ нковский переулок 2
+END:VEVENT
+END:VCALENDAR

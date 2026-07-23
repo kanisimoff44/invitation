@@ -1,0 +1,11 @@
+<section class="section section--location reveal">
+    <h2 class="section__title">Место проведения</h2>
+    <p class="location__venue">{{ venue_name }}</p>
+    <p class="location__address">{{ venue_address }}</p>
+    <a
+        class="btn btn--text"
+        href="https://yandex.ru/maps/?text={{ (venue_address ~ ' ' ~ venue_name) | urlencode }}"
+        target="_blank" rel="noopener">
+        Открыть на карте &#8594;
+    </a>
+</section>

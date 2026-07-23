@@ -1,0 +1,12 @@
+<section class="section section--timeline reveal">
+    <h2 class="section__title">Программа дня</h2>
+    <ul class="timeline">
+        {% for item in timeline %}
+        <li class="timeline__item">
+            <span class="timeline__dot" aria-hidden="true"></span>
+            <span class="timeline__time">{{ item.time }}</span>
+            <span class="timeline__label">{{ item.title }}</span>
+        </li>
+        {% endfor %}
+    </ul>
+</section>

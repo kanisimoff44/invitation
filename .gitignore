@@ -1,0 +1,29 @@
+# Secrets & runtime data (каталоги сохраняем через .gitkeep, содержимое — нет)
+.env
+secrets/*
+!secrets/.gitkeep
+data/*
+!data/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+
+# Let's Encrypt / certbot runtime
+nginx/certbot/conf/
+nginx/certbot/www/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

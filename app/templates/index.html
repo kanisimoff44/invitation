@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "partials/hero.html" %}
+
+<main class="content">
+    {% include "partials/intro.html" %}
+    {% include "partials/date_calendar.html" %}
+    {% include "partials/location.html" %}
+    {% include "partials/timeline.html" %}
+    {% include "partials/dresscode.html" %}
+    {% include "partials/rsvp_form.html" %}
+</main>
+
+{% include "partials/footer_photo.html" %}
+{% endblock %}

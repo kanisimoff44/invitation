@@ -1,0 +1,47 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data                 # SQLite переживает пересборку образа
+      - ./secrets:/app/secrets:ro         # google-service-account.json (только чтение)
+    expose:
+      - "8000"                            # виден только внутри сети compose
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "81:80"
+      - "444:443"
+    environment:
+      # Подставляется в шаблон вместо ${DOMAIN}. Только эта переменная
+      # заменяется, nginx-переменные ($host и т.п.) остаются нетронутыми.
+      DOMAIN: ${DOMAIN}
+      NGINX_ENVSUBST_FILTER: "DOMAIN"
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      - ./nginx/certbot/conf:/etc/letsencrypt:ro
+    # Каждые 6 часов перезагружаем nginx, чтобы подхватить продлённый сертификат.
+    command: >
+      /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & /docker-entrypoint.sh nginx -g "daemon off;"'
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/certbot/conf:/etc/letsencrypt
+    # Каждые 12 часов пытается продлить сертификаты (renew — no-op, если рано).
+    entrypoint: >
+      sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done'

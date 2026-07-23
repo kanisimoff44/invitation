@@ -1,0 +1,56 @@
+# ${DOMAIN} подставляется из переменной окружения при старте nginx.
+
+# Ограничение частоты запросов к RSVP (простая антиспам-мера).
+limit_req_zone $binary_remote_addr zone=rsvp_limit:10m rate=10r/m;
+
+# --- HTTP: ACME-challenge + редирект на HTTPS ------------------------
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    # Валидация сертификата Let's Encrypt.
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Всё остальное — на HTTPS.
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# --- HTTPS: основной сайт --------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name ${DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # Форма маленькая — ограничиваем размер тела как защиту от abuse.
+    client_max_body_size 1m;
+
+    # Статика отдаётся напрямую приложением через /static (проксируется).
+    location /api/rsvp {
+        limit_req zone=rsvp_limit burst=5 nodelay;
+        proxy_pass http://app:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://app:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

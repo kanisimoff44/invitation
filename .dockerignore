@@ -1,0 +1,15 @@
+.git
+.gitignore
+.venv
+venv
+__pycache__
+*.pyc
+.env
+secrets
+data
+nginx
+scripts
+README.md
+TZ.md
+*.md
+.pytest_cache
