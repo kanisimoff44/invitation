@@ -38,6 +38,12 @@ def index(request: Request):
     return templates.TemplateResponse("index.html", context)
 
 
+@router.get("/guests")
+def guests_page(request: Request):
+    """Мини-страница для организаторов: ввод токена и скачивание списка."""
+    return templates.TemplateResponse("guests.html", {"request": request})
+
+
 @router.get("/calendar.ics")
 def calendar_ics():
     """Отдаёт .ics. Если предгенерированный файл есть — статикой, иначе на лету."""

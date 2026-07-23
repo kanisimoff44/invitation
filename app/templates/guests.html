@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Список гостей</title>
+    <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <main class="admin">
+        <div class="admin__card">
+            <h1 class="admin__title">Список гостей</h1>
+            <p class="admin__hint">Введите токен, чтобы скачать список в Excel.</p>
+
+            <form class="rsvp-form" id="export-form" novalidate>
+                <div class="field">
+                    <label class="field__label" for="token">Токен доступа</label>
+                    <input class="field__input" type="password" id="token"
+                           name="token" autocomplete="off" required>
+                </div>
+
+                <label class="admin__check">
+                    <input type="checkbox" id="all">
+                    <span>Включить отказавшихся</span>
+                </label>
+
+                <button class="btn btn--primary" type="submit" id="export-submit">
+                    Скачать xlsx
+                </button>
+                <p class="rsvp-form__error" id="export-error" role="alert" hidden></p>
+            </form>
+
+            <a class="btn btn--text admin__back" href="/">&#8592; На страницу приглашения</a>
+        </div>
+    </main>
+
+    <script>
+    (function () {
+        "use strict";
+        var form = document.getElementById("export-form");
+        var tokenEl = document.getElementById("token");
+        var allEl = document.getElementById("all");
+        var btn = document.getElementById("export-submit");
+        var errorEl = document.getElementById("export-error");
+
+        function showError(msg) {
+            errorEl.textContent = msg;
+            errorEl.hidden = false;
+        }
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            errorEl.hidden = true;
+
+            var token = (tokenEl.value || "").trim();
+            if (!token) {
+                showError("Введите токен.");
+                tokenEl.focus();
+                return;
+            }
+
+            var url = "/api/guests/export.xlsx?token=" +
+                encodeURIComponent(token) + (allEl.checked ? "&all=true" : "");
+
+            btn.disabled = true;
+            var original = btn.textContent;
+            btn.textContent = "Готовим файл…";
+
+            fetch(url)
+                .then(function (res) {
+                    if (res.status === 403) throw new Error("forbidden");
+                    if (!res.ok) throw new Error("unavailable");
+                    return res.blob();
+                })
+                .then(function (blob) {
+                    var link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "guests.xlsx";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(link.href);
+                    btn.disabled = false;
+                    btn.textContent = original;
+                })
+                .catch(function (err) {
+                    btn.disabled = false;
+                    btn.textContent = original;
+                    if (err && err.message === "forbidden") {
+                        showError("Неверный токен.");
+                    } else {
+                        showError("Выгрузка недоступна. Попробуйте позже.");
+                    }
+                });
+        });
+    })();
+    </script>
+</body>
+</html>
