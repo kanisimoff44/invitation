@@ -40,8 +40,3 @@ class RSVP(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow
     )
-
-    # Успела ли запись синхронизироваться в Google Sheets (для возможного resync).
-    synced_to_sheets: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False
-    )

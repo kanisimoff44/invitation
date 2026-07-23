@@ -69,13 +69,12 @@ class Settings(BaseSettings):
     # поэтому дефолт корректно работает и локально, и в Docker без переопределения.
     database_url: str = f"sqlite:///{_DEFAULT_DB_PATH}"
 
-    # Google Sheets. Пустые значения => интеграция отключена (graceful).
-    google_application_credentials: str = ""
-    google_sheet_id: str = ""
-    google_sheet_worksheet: str = "RSVP"
-
     # Показывать ли поле "количество гостей" (+1/+2). Отключаемая фича.
     enable_guests_count_field: bool = True
+
+    # Токен для защиты выгрузки списка гостей (xlsx). Пока не задан — выгрузка
+    # недоступна (404), чтобы список гостей не был открыт всем.
+    export_token: str = ""
 
     # Разрешённые Host-заголовки (защита от Host-header атак).
     # Пустая строка => middleware не ограничивает (удобно для dev).

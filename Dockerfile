@@ -13,7 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Код приложения.
 COPY app ./app
 
-# Непривилегированный пользователь.
+# Непривилегированный пользователь по умолчанию (uid 1000). Реальный uid/gid
+# процесса можно переопределить в docker-compose (user:), чтобы он совпал с
+# владельцем смонтированного каталога data/ на сервере.
 RUN useradd --create-home --uid 1000 appuser \
     && mkdir -p /app/data \
     && chown -R appuser:appuser /app

@@ -5,7 +5,6 @@ services:
     env_file: .env
     volumes:
       - ./data:/app/data                 # SQLite переживает пересборку образа
-      - ./secrets:/app/secrets:ro         # google-service-account.json (только чтение)
     expose:
       - "8000"                            # виден только внутри сети compose
     healthcheck:

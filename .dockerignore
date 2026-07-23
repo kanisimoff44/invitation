@@ -5,7 +5,6 @@ venv
 __pycache__
 *.pyc
 .env
-secrets
 data
 nginx
 scripts

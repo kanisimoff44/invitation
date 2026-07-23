@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import pages, rsvp
+from app.routers import export, pages, rsvp
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,3 +40,4 @@ app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 app.include_router(pages.router)
 app.include_router(rsvp.router)
+app.include_router(export.router)

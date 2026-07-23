@@ -1,7 +1,5 @@
-# Secrets & runtime data (каталоги сохраняем через .gitkeep, содержимое — нет)
+# Secrets & runtime data (каталог data/ сохраняем через .gitkeep, содержимое — нет)
 .env
-secrets/*
-!secrets/.gitkeep
 data/*
 !data/.gitkeep
 *.db
