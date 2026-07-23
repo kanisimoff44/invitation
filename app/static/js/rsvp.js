@@ -61,10 +61,12 @@
         var hpEl = form.querySelector('input[name="website"]');
         var website = hpEl ? hpEl.value : "";
 
-        // Защита от двойного клика.
+        // Убираем форму (вместе с кнопкой) сразу и показываем статус отправки —
+        // это же место затем займёт итоговая фраза.
         submitBtn.disabled = true;
-        var originalText = submitBtn.textContent;
-        submitBtn.textContent = "Отправляем…";
+        form.hidden = true;
+        thanksText.textContent = "Отправляем…";
+        thanksBox.hidden = false;
 
         fetch("/api/rsvp", {
             method: "POST",
@@ -86,12 +88,12 @@
                 } catch (_) { /* игнор */ }
                 thanksText.textContent =
                     (data && data.message) || "Спасибо! Ваш ответ получен.";
-                form.hidden = true;
-                thanksBox.hidden = false;
             })
             .catch(function () {
+                // Ошибка — возвращаем форму, чтобы можно было повторить.
+                thanksBox.hidden = true;
+                form.hidden = false;
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
                 showError(
                     "Не удалось отправить. Проверьте соединение и попробуйте ещё раз."
                 );
