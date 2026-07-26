@@ -1,25 +1,12 @@
+# HTTPS (порт 443): основной сайт.
+# ВАЖНО: этот файл лежит вне nginx/templates/ и подключается init-скриптом
+# (копируется в nginx/templates/) ТОЛЬКО ПОСЛЕ выпуска сертификата — иначе
+# nginx упал бы при старте из-за отсутствующих cert-файлов.
 # ${DOMAIN} подставляется из переменной окружения при старте nginx.
 
 # Ограничение частоты запросов к RSVP (простая антиспам-мера).
 limit_req_zone $binary_remote_addr zone=rsvp_limit:10m rate=10r/m;
 
-# --- HTTP: ACME-challenge + редирект на HTTPS ------------------------
-server {
-    listen 80;
-    server_name ${DOMAIN};
-
-    # Валидация сертификата Let's Encrypt.
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-
-    # Всё остальное — на HTTPS.
-    location / {
-        return 301 https://$host$request_uri;
-    }
-}
-
-# --- HTTPS: основной сайт --------------------------------------------
 server {
     listen 443 ssl;
     http2 on;
@@ -36,7 +23,6 @@ server {
     # Форма маленькая — ограничиваем размер тела как защиту от abuse.
     client_max_body_size 1m;
 
-    # Статика отдаётся напрямую приложением через /static (проксируется).
     location /api/rsvp {
         limit_req zone=rsvp_limit burst=5 nodelay;
         proxy_pass http://app:8000;

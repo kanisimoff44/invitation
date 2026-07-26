@@ -1,0 +1,19 @@
+# HTTP (порт 80): ACME-challenge + редирект на HTTPS.
+# Этот блок НЕ требует сертификата, поэтому nginx стартует всегда —
+# в том числе до выпуска сертификата Let's Encrypt (обслуживает challenge).
+# ${DOMAIN} подставляется из переменной окружения при старте nginx.
+
+server {
+    listen 80;
+    server_name ${DOMAIN};
+
+    # Проверка домена Let's Encrypt (webroot).
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Всё остальное — на HTTPS.
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}

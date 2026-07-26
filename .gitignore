@@ -20,6 +20,9 @@ env/
 nginx/certbot/conf/
 nginx/certbot/www/
 
+# Активируемая init-скриптом копия HTTPS-конфига (источник — nginx/https.conf.template)
+nginx/templates/https.conf.template
+
 # OS / editor
 .DS_Store
 Thumbs.db

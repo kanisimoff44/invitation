@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 # Первичное получение TLS-сертификата Let's Encrypt.
 #
-# Проблема "курицы и яйца": nginx не стартует без файла сертификата
-# (в конфиге есть ssl_certificate), а certbot не может выпустить сертификат
-# без работающего на порту 80 nginx для ACME-challenge.
-#
-# Решение: создаём временный самоподписанный "dummy" сертификат, поднимаем
-# nginx, затем заменяем dummy на настоящий сертификат от Let's Encrypt.
+# Схема без "курицы и яйца": nginx сначала поднимается ТОЛЬКО с HTTP-конфигом
+# (nginx/templates/http.conf.template) — он не требует сертификата и потому
+# гарантированно стартует, обслуживая ACME-challenge на порту 80. После выпуска
+# сертификата подключается HTTPS-конфиг (nginx/https.conf.template копируется
+# в nginx/templates/), и nginx перезапускается уже с настоящим сертификатом.
 #
 # Запускать ОДИН раз на сервере после настройки .env (DOMAIN, CERTBOT_EMAIL)
-# и DNS, указывающего на этот сервер:
+# и DNS, указывающего A-записью на этот сервер:
 #   bash scripts/init_letsencrypt.sh
 set -euo pipefail
 
@@ -23,38 +22,42 @@ fi
 : "${DOMAIN:?Задайте DOMAIN в .env}"
 : "${CERTBOT_EMAIL:?Задайте CERTBOT_EMAIL в .env}"
 
-CERT_DIR="nginx/certbot/conf/live/${DOMAIN}"
-WWW_DIR="nginx/certbot/www"
-
 echo "### Домен: ${DOMAIN}"
 
-mkdir -p "${CERT_DIR}" "${WWW_DIR}"
+mkdir -p nginx/certbot/www nginx/certbot/conf
 
-echo "### Создаю временный самоподписанный сертификат…"
-openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-    -keyout "${CERT_DIR}/privkey.pem" \
-    -out "${CERT_DIR}/fullchain.pem" \
-    -subj "/CN=${DOMAIN}" >/dev/null 2>&1
+# 1. Бутстрап: только HTTP-конфиг. Убираем возможный HTTPS-конфиг от прошлого
+#    запуска, чтобы nginx точно стартовал без сертификата.
+rm -f nginx/templates/https.conf.template
 
-echo "### Поднимаю nginx с временным сертификатом…"
+echo "### Поднимаю app и nginx (только HTTP)…"
+docker compose up -d --build app
 docker compose up -d nginx
 sleep 5
 
-echo "### Удаляю временный сертификат…"
-rm -rf "${CERT_DIR}"
+# Проверим, что nginx действительно слушает 80 внутри контейнера.
+echo "### Проверка nginx на порту 80…"
+if docker compose exec -T nginx wget -q -O /dev/null \
+        "http://localhost/.well-known/acme-challenge/ping" 2>/dev/null; then
+    echo "    nginx отвечает."
+else
+    # 404 на несуществующий файл — это нормально (значит nginx жив).
+    echo "    (проверка завершена)"
+fi
 
-echo "### Запрашиваю настоящий сертификат у Let's Encrypt…"
-docker compose run --rm --entrypoint "\
-  certbot certonly --webroot -w /var/www/certbot \
-    -d ${DOMAIN} \
-    --email ${CERTBOT_EMAIL} \
-    --agree-tos --no-eff-email \
-    --non-interactive" certbot
+echo "### Запрашиваю сертификат Let's Encrypt…"
+docker compose run --rm --entrypoint certbot certbot \
+    certonly --webroot -w /var/www/certbot \
+    -d "${DOMAIN}" \
+    --email "${CERTBOT_EMAIL}" \
+    --agree-tos --no-eff-email --non-interactive
 
-echo "### Перезагружаю nginx с настоящим сертификатом…"
-docker compose exec nginx nginx -s reload || docker compose restart nginx
+# 2. Сертификат получен — подключаем HTTPS-конфиг и перезапускаем nginx.
+echo "### Включаю HTTPS…"
+cp nginx/https.conf.template nginx/templates/https.conf.template
+docker compose restart nginx
 
-echo "### Готово. Поднимаю все сервисы…"
+echo "### Поднимаю все сервисы (включая автопродление certbot)…"
 docker compose up -d
 
-echo "### Проверьте: https://${DOMAIN}"
+echo "### Готово. Проверьте: https://${DOMAIN}"

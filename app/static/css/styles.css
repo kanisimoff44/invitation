@@ -221,6 +221,7 @@ img { max-width: 100%; height: auto; display: block; }
 }
 .swatch--red { background: var(--color-primary); }
 .swatch--white { background: #fff; box-shadow: inset 0 0 0 1px var(--color-line); }
+.swatch--black { background: #1a1a1a; }
 
 /* --- Buttons ---------------------------------------------- */
 .btn {

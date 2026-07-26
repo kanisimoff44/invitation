@@ -85,9 +85,10 @@ https://<домен>/api/guests/export.xlsx?token=<ВАШ_ТОКЕН>
    ```bash
    bash scripts/init_letsencrypt.sh
    ```
-   Скрипт создаёт временный самоподписанный сертификат, поднимает nginx,
-   получает настоящий сертификат Let's Encrypt через ACME-challenge и
-   перезагружает nginx. Certbot дальше продлевает сертификат автоматически
+   Скрипт сначала поднимает nginx **только с HTTP-конфигом** (без SSL — упасть
+   не может), тот обслуживает ACME-challenge на порту 80; certbot получает
+   сертификат; затем подключается HTTPS-конфиг и nginx перезапускается уже с
+   настоящим сертификатом. Дальше certbot продлевает сертификат автоматически
    (проверка каждые 12 часов), nginx перечитывает его каждые 6 часов.
 4. Проверьте: `https://<ваш-домен>` открывается с валидным сертификатом.
 
@@ -95,6 +96,12 @@ https://<домен>/api/guests/export.xlsx?token=<ВАШ_ТОКЕН>
 ```bash
 docker compose run --rm --entrypoint "certbot renew --dry-run" certbot
 ```
+
+> **Если certbot всё равно пишет `Connection refused`** при проверке
+> `http://<домен>/.well-known/acme-challenge/...` — значит порт 80 недоступен
+> снаружи. Проверьте: `docker compose ps` (nginx должен быть Up, не Restarting),
+> `docker compose logs nginx`, а также файрвол — `sudo ufw allow 80/tcp` и
+> входящие правила 80/443 в панели VPS-провайдера.
 
 ### Предпросмотр по IP (пока домен не готов)
 
@@ -149,6 +156,8 @@ app/
   templates/           Jinja2: base, index, partials/*
   static/              css, js, images (+ webp/resize), files/wedding.ics
 scripts/               generate_ics, optimize_images, init_letsencrypt
-nginx/templates/       конфиг nginx (шаблон с ${DOMAIN})
+nginx/templates/http.conf.template   nginx HTTP (порт 80, ACME + редирект)
+nginx/https.conf.template            nginx HTTPS (порт 443) — активируется
+                                     init-скриптом после выпуска сертификата
 docker-compose.yml     app + nginx + certbot
 ```
