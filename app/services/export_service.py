@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from app import config
 from app.models import RSVP
 
-_HEADER = ["№", "Имя и фамилия", "Доп. гостей", "Всего человек", "Обновлено"]
+_HEADER = ["№", "Имя и фамилия", "Придёт", "Доп. гостей", "Всего человек", "Обновлено"]
 
 
 def build_guests_xlsx(db: Session, *, attending_only: bool = True) -> bytes:
@@ -60,19 +60,20 @@ def build_guests_xlsx(db: Session, *, attending_only: bool = True) -> bytes:
         row = idx + 1
         ws.cell(row=row, column=1, value=idx)
         ws.cell(row=row, column=2, value=rec.full_name)
-        ws.cell(row=row, column=3, value=rec.guests_count)
-        ws.cell(row=row, column=4, value=people)
-        ws.cell(row=row, column=5, value=updated_str)
+        ws.cell(row=row, column=3, value="Приду" if rec.attending else "Не приду")
+        ws.cell(row=row, column=4, value=rec.guests_count)
+        ws.cell(row=row, column=5, value=people)
+        ws.cell(row=row, column=6, value=updated_str)
 
     # Итоговая строка.
     total_row = len(records) + 2
     label = ws.cell(row=total_row, column=2, value="Итого")
     label.font = Font(bold=True)
-    people_cell = ws.cell(row=total_row, column=4, value=total_people)
+    people_cell = ws.cell(row=total_row, column=5, value=total_people)
     people_cell.font = Font(bold=True)
 
     # Ширины колонок.
-    widths = [6, 34, 14, 16, 20]
+    widths = [6, 34, 12, 14, 16, 20]
     for col, width in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(col)].width = width
 
