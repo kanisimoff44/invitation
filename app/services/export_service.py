@@ -45,7 +45,8 @@ def build_guests_xlsx(db: Session, *, attending_only: bool = True) -> bytes:
 
     total_people = 0
     for idx, rec in enumerate(records, start=1):
-        people = 1 + (rec.guests_count or 0)
+        # Отказавшийся не считается за человека на празднике → 0.
+        people = (1 + (rec.guests_count or 0)) if rec.attending else 0
         total_people += people
 
         updated = rec.updated_at
@@ -67,7 +68,6 @@ def build_guests_xlsx(db: Session, *, attending_only: bool = True) -> bytes:
     total_row = len(records) + 2
     label = ws.cell(row=total_row, column=2, value="Итого")
     label.font = Font(bold=True)
-    ws.cell(row=total_row, column=3, value=f"гостей: {len(records)}").font = Font(bold=True)
     people_cell = ws.cell(row=total_row, column=4, value=total_people)
     people_cell.font = Font(bold=True)
 
